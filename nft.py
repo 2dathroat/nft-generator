@@ -74,12 +74,12 @@ def main(config, debug, skip_images, skip_analysis):
         config_json = json.load(config_file)
 
     if debug:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(format='%(message)s', level=logging.WARNING)
 
     validate(config_json)
-    
+
     logging.info('generating tokens')
 
     # generate the unique tokens first
