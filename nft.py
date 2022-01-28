@@ -46,9 +46,9 @@ def validate(config):
 
 def analyze(config, generated_list):
     """ Analyzes generated tokens for interesting metrics """
-    
-    group_by_character = next(itertools.groupby(generated_list, lambda i: i[0]))
-    logging.warn(f"{len(list(group_by_character[1]))} tokens generated for character: {group_by_character[0]}")
+
+    for character in config['characters']:
+        logging.warn(f"{sum(map(lambda i: i[0] == character['name'], generated_list))} tokens generated for character: {character['name']}")
 
     # group by variants per trait and analyze rarity
     transposed = list(zip(*generated_list))[1:]
@@ -60,7 +60,7 @@ def analyze(config, generated_list):
         logging.warn(f"{len(variants)} variants generated for trait: {config['traits'][n]['type']}")
         for k in variants:
             logging.warn(f"variant: {k} occurrences: {variants[k]} rarity: {variants[k]*100/config['size']}")
-    
+
 
 @click.command()
 @click.option('-c', '--config', required=True, type=str, help='Location of NFT config file')
