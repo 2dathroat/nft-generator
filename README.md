@@ -1,6 +1,10 @@
 # nft-generator
 Intuitive multi-platform NFT art generator
 
+# Prerequisites
+1. Clone the repository `git clone https://github.com/2dathroat/nft-generator.git`
+2. Install the dependencies pip3 install -r `requirements.txt`
+
 # Quick Start
 1. Generate JSON input using https://2dathroat.github.io/rarity-calculator/
 2. Make sure your directories are lined up accordingly. The script assumes path construct of `character/trait/variant.png`
