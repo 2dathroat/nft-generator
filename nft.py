@@ -20,7 +20,8 @@ def generate_single_token(traits, generated_set):
     
     token = []
     _generate_single_token(token, traits)
-    while tuple(token) in generated_set:
+    # regenerate existing or invalid token
+    while all(i is None for i in token) or tuple(token) in generated_set:
         logging.info(f'existing token: {token}, regenerating')
         token = []
         _generate_single_token(token, traits)
@@ -114,24 +115,21 @@ def main(config, base_path, debug, skip_images, skip_analysis):
 
     # next, iterate over generated tokens per character to generate the images
     for char, char_tokens in character_tokens.items():
+        base_img = None
         for n, i in enumerate(char_tokens):
-            # find the first trait to use as baseline image
-            for nn, j in enumerate(i):
-                if j is not None:
-                    im1 = Image.open(f'{base_path}/{char}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
-                    break
-
-            first_not_none = nn
             # overlay the rest of the traits
-            for nn, j in enumerate(i[first_not_none + 1:], first_not_none + 1):
+            for nn, j in enumerate(i):
                 # if nothing to overlay
                 if j is None:
                     continue
-                im2 = Image.open(f'{base_path}/{char}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
-                com = Image.alpha_composite(im1, im2)
-                im1 = com
+                im = Image.open(f'{base_path}/{char}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
+                if base_img is None:
+                    base_img = Image.new(mode='RGBA', size=im.size)
+                base_img.paste(im, (0, 0), mask=im)
+                #im1 = com
 
-            im1.convert('RGB').save(f'{base_path}/{char}/output/{n}.png')
+            base_img.save(f'{base_path}/{char}/output/{n}.png')
+            base_img = None
 
 
 if __name__ == '__main__':
