@@ -44,14 +44,16 @@ def validate(config):
     assert config['size'] <= n, f'Not enough variants to generate {config["size"]} unique tokens \
         (can generate up to {n} with current config)' 
 
-def analyze(config, generated_list):
+def analyze(config, character_tokens):
     """ Analyzes generated tokens for interesting metrics """
 
-    for character in config['characters']:
-        logging.warn(f"{sum(map(lambda i: i[0] == character['name'], generated_list))} tokens generated for character: {character['name']}")
+    all_tokens = []
+    for k, v in character_tokens.items():
+        logging.warn(f"{len(v)} tokens generated for character: {k}")
+        all_tokens.extend(v)
 
     # group by variants per trait and analyze rarity
-    transposed = list(zip(*generated_list))[1:]
+    transposed = list(zip(*all_tokens))[1:]
     for n, i in enumerate(transposed):
         variants = defaultdict(int)
         for j in i:
@@ -88,18 +90,16 @@ def main(config, base_path, debug, skip_images, skip_analysis):
     for i in range(config_json['size']):
         generate_single_token(config_json['traits'], generated_set)
 
-    # transform the tuples back to list so we can add the characters,
-    # then attach tokens to characters according to their weights
-    generated_list = []
+    # attach tokens to characters according to their weights
+    character_tokens = defaultdict(list)
     for i in generated_set:
-        generated_list.append(list(i))
-        c = random.choices(config_json['characters'], [j['weight'] for j in config_json['characters']])
-        generated_list[-1].insert(0, c[0]['name'])
+        c = random.choices(config_json['characters'], [j['weight'] for j in config_json['characters']])[0]['name']
+        character_tokens[c].append(i)
 
-    logging.info(f'tokens and characters: {generated_list}')
+    logging.warn(f'tokens and characters: {character_tokens}')
 
     if not skip_analysis:
-        analyze(config_json, generated_list)
+        analyze(config_json, character_tokens)
     #
     # per token create the images by overlaying each trait.
     #
@@ -112,25 +112,26 @@ def main(config, base_path, debug, skip_images, skip_analysis):
         if not os.path.exists(f'{base_path}/{i["name"]}/output'):
             os.mkdir(f'{base_path}/{i["name"]}/output')
 
-    # next, iterate over generated tokens to generate the images
-    for n, i in enumerate(generated_list):
-        # offset 0 is reserved for character, lets find the first trait to use as baseline image
-        for nn, j in enumerate(i[1:]):
-            if j is not None:
-                im1 = Image.open(f'{base_path}/{i[0]}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
-                break
+    # next, iterate over generated tokens per character to generate the images
+    for char, char_tokens in character_tokens.items():
+        for n, i in enumerate(char_tokens):
+            # find the first trait to use as baseline image
+            for nn, j in enumerate(i):
+                if j is not None:
+                    im1 = Image.open(f'{base_path}/{char}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
+                    break
 
-        first_not_none = nn
-        # overlay the rest of the traits
-        for nn, j in enumerate(i[first_not_none + 2:], first_not_none + 1):
-            # if nothing to overlay
-            if j is None:
-                continue
-            im2 = Image.open(f'{base_path}/{i[0]}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
-            com = Image.alpha_composite(im1, im2)
-            im1 = com
+            first_not_none = nn
+            # overlay the rest of the traits
+            for nn, j in enumerate(i[first_not_none + 1:], first_not_none + 1):
+                # if nothing to overlay
+                if j is None:
+                    continue
+                im2 = Image.open(f'{base_path}/{char}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
+                com = Image.alpha_composite(im1, im2)
+                im1 = com
 
-        im1.convert('RGB').save(f'{base_path}/{i[0]}/output/{n}.png')
+            im1.convert('RGB').save(f'{base_path}/{char}/output/{n}.png')
 
 
 if __name__ == '__main__':
