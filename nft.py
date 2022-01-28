@@ -61,7 +61,7 @@ def analyze(config, character_tokens):
 
         logging.warn(f"{len(variants)} variants generated for trait: {config['traits'][n]['type']}")
         for k in variants:
-            logging.warn(f"variant: {k} occurrences: {variants[k]} rarity: {variants[k]*100/config['size']}")
+            logging.warn(f"variant: {k} occurrences: {variants[k]} rarity: {variants[k]*100/config['size']:.2f}%")
 
 
 @click.command()
