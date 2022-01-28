@@ -64,10 +64,11 @@ def analyze(config, generated_list):
 
 @click.command()
 @click.option('-c', '--config', required=True, type=str, help='Location of NFT config file')
+@click.option('-p', '--base_path', default='.', type=str, help='Base path of character directories')
 @click.option('-d', '--debug', default=False, type=bool, help='Verbose run')
 @click.option('-i', '--skip_images', default=False, type=bool, help='Skip image generation. Useful to analyze expected output')
 @click.option('-s', '--skip_analysis', default=False, type=bool, help='Skip token analysis')
-def main(config, debug, skip_images, skip_analysis):
+def main(config, base_path, debug, skip_images, skip_analysis):
     """ Generate random tokens with different traits given a config file. """
 
     with open(config) as config_file:
@@ -96,7 +97,7 @@ def main(config, debug, skip_images, skip_analysis):
         generated_list[-1].insert(0, c[0]['name'])
 
     logging.info(f'tokens and characters: {generated_list}')
-   
+
     if not skip_analysis:
         analyze(config_json, generated_list)
     #
@@ -108,15 +109,15 @@ def main(config, debug, skip_images, skip_analysis):
 
     # first, create the output directories
     for i in config_json['characters']:
-        if not os.path.exists(f'{i["name"]}/output'):
-            os.mkdir(f'{i["name"]}/output')
+        if not os.path.exists(f'{base_path}/{i["name"]}/output'):
+            os.mkdir(f'{base_path}/{i["name"]}/output')
 
     # next, iterate over generated tokens to generate the images
     for n, i in enumerate(generated_list):
         # offset 0 is reserved for character, lets find the first trait to use as baseline image
         for nn, j in enumerate(i[1:]):
             if j is not None:
-                im1 = Image.open(f'{i[0]}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
+                im1 = Image.open(f'{base_path}/{i[0]}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
                 break
 
         first_not_none = nn
@@ -125,11 +126,11 @@ def main(config, debug, skip_images, skip_analysis):
             # if nothing to overlay
             if j is None:
                 continue
-            im2 = Image.open(f'{i[0]}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
+            im2 = Image.open(f'{base_path}/{i[0]}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
             com = Image.alpha_composite(im1, im2)
             im1 = com
 
-        im1.convert('RGB').save(f'{i[0]}/output/{n}.png')
+        im1.convert('RGB').save(f'{base_path}/{i[0]}/output/{n}.png')
 
 
 if __name__ == '__main__':
