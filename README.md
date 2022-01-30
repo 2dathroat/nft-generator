@@ -12,7 +12,7 @@ Intuitive multi-platform NFT art generator
 3. Run `./nft.py --config <json_config>`
 
 # Example
-Resulting GIF:
+Resulting tokens (compiled to gif):
 
 ![Webp net-gifmaker](https://user-images.githubusercontent.com/98057345/151698651-e311df3d-de4f-4734-88ac-46807dc189b4.gif)
 
