@@ -10,21 +10,23 @@ from collections import defaultdict
 from PIL import Image
 
 
-def _generate_single_token(token, traits):
+def _generate_single_token(token, characters, traits):
+    token.append(random.choices(characters, [i['weight'] for i in characters])[0]['name'])
     for t in traits:
         logging.info(f'generating trait {t["type"]}')
         token.append(random.choices(t['variants'], [i['weight'] for i in t['variants']])[0]['type'])
 
-def generate_single_token(traits, generated_set):
+def generate_single_token(characters, traits, generated_set):
     """ Generates a single unique token """
     
     token = []
-    _generate_single_token(token, traits)
+    _generate_single_token(token, characters, traits)
+    logging.info(f'candidate token {token}')
     # regenerate existing or invalid token
     while all(i is None for i in token) or tuple(token) in generated_set:
         logging.info(f'existing token: {token}, regenerating')
         token = []
-        _generate_single_token(token, traits)
+        _generate_single_token(token, characters, traits)
     logging.info(f'generated token: {token}')
     generated_set.add(tuple(token))
 
@@ -38,7 +40,7 @@ def validate(config):
     assert len(config['traits'][0]['variants']) >= 1
 
     # validate 'size' tokens can be uniquly generated
-    n = 1
+    n = len(config['characters']) 
     for i in config['traits']:
         n *= len(i['variants'])
 
@@ -89,13 +91,12 @@ def main(config, base_path, debug, skip_images, skip_analysis):
     # generate the unique tokens first
     generated_set = set()
     for i in range(config_json['size']):
-        generate_single_token(config_json['traits'], generated_set)
+        generate_single_token(config_json['characters'], config_json['traits'], generated_set)
 
-    # attach tokens to characters according to their weights
+    # convert to dict character->list of tokens for easier manipulation 
     character_tokens = defaultdict(list)
     for i in generated_set:
-        c = random.choices(config_json['characters'], [j['weight'] for j in config_json['characters']])[0]['name']
-        character_tokens[c].append(i)
+        character_tokens[i[0]].append(i[1:])
 
     logging.warn(f'tokens and characters: {character_tokens}')
 
@@ -116,13 +117,29 @@ def main(config, base_path, debug, skip_images, skip_analysis):
     # next, iterate over generated tokens per character to generate the images
     for char, char_tokens in character_tokens.items():
         base_img = None
+        char_config = next(filter(lambda c:c['name'] == char, config_json['characters']))
+
+        # map out z index to trait order
+        z_order = sorted(config_json['traits'], key=lambda i:i['z-index'])
+        # put the character in its position as well
+        for char_pos, i in enumerate(z_order):
+            if char_config['z-index'] <= i['z-index']:
+                break
+
+        traverse_order = list(map(lambda j:[i['type'] for i in config_json['traits']].index(j['type']), z_order))
+        # arbitrary lets have -1 represent the character
+        traverse_order.insert(char_pos, -1)
         for n, i in enumerate(char_tokens):
-            # overlay the rest of the traits
-            for nn, j in enumerate(i):
-                # if nothing to overlay
-                if j is None:
+            # overlay the traits according to z index order
+            for j in traverse_order:
+                # this is the character (he must exist)
+                if j == -1:
+                    im = Image.open(f'{base_path}/{char}/{char}.png').convert('RGBA')
+                # nothing to overlay
+                elif i[j] is None:
                     continue
-                im = Image.open(f'{base_path}/{char}/{config_json["traits"][nn]["type"]}/{j}.png').convert('RGBA')
+                else:
+                    im = Image.open(f'{base_path}/{char}/{config_json["traits"][j]["type"]}/{i[j]}.png').convert('RGBA')
                 if base_img is None:
                     base_img = Image.new(mode='RGBA', size=im.size)
                 base_img.paste(im, (0, 0), mask=im)

@@ -1,71 +1,47 @@
 {
-	"size": 100,
+	"size": 10,
 	"characters": [{
-		"name": "tomer",
-		"weight": 2
-	}, {
-		"name": "bar",
+		"name": "blueEmoji",
+		"z-index": 2,
 		"weight": 1
+	}, {
+		"name": "yellowEmoji",
+		"z-index": 2,
+		"weight": 2 
 	}],
 	"traits": [{
-		"type": "backgrounds",
+		"type": "eyes",
+		"z-index": 3,
 		"variants": [{
-			"type": "blue",
+			"type": "piratePatch",
 			"weight": 1
 		}, {
-			"type": "orange",
-			"weight": 10
-		}, {
-			"type": "purple",
+			"type": "sunglasses",
 			"weight": 3
-		}, {
-			"type": "red",
-			"weight": 1
-		}, {
-			"type": "yellow",
-			"weight": 1
-		}, {
-			"type": null,
-			"weight": 1
-		}]
+		}
+		]
 	}, {
-		"type": "circles",
+		"type": "mouth",
+		"z-index": 4,
 		"variants": [{
-			"type": "blue-circle",
+			"type": "sad",
 			"weight": 1
 		}, {
-			"type": "green-circle",
+			"type": "smile",
 			"weight": 1
-		}, {
-			"type": "orange-circle",
-			"weight": 1
-		}, {
-			"type": "red-circle",
-			"weight": 2
-		}, {
-			"type": "yellow-circle",
-			"weight": 1
-		}, {
-			"type": null,
-			"weight": 1
-		}]
+		}
+		]
 	}, {
-		"type": "squares",
+		"type": "backgrounds",
+		"z-index": 1,
 		"variants": [{
-			"type": "blue-square",
+			"type": "black",
 			"weight": 1
 		}, {
-			"type": "green-square",
+			"type": "white",
 			"weight": 1
-		}, {
-			"type": "orange-square",
-			"weight": 1
-		}, {
-			"type": "red-square",
-			"weight": 100
-		}, {
-			"type": null,
-			"weight": 1
-		}]
-	}]
+		}
+		]
+	}
+	]
 }
